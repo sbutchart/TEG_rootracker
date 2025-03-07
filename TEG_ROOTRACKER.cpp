@@ -11,6 +11,9 @@
 #include "TTree.h"
 #include "CLI11.hpp"
 
+std::string InputFile = "";
+std::string OutputFile = "TEG_rootracker.gtrac.root";
+
 
 class Particle: public TObject {
   public:
@@ -28,13 +31,13 @@ class Particle: public TObject {
 std::vector<Particle> GetData(std::string InputFile) {
   std::vector<Particle> part;
   double PDG, in_out_state, px, py, pz, E, m;
+  int EventCount = 0;
+
   std::string line;
   std::ifstream inFile;
   inFile.open(InputFile.c_str());
 
-  int EventCount = 0;
-
-  for(std::string line; getline(inFile, line); ) {    
+  for(std::string line; getline(inFile, line); ) { 
     //if line = <event>, increase event no. by 1, read in next 4 lines
     if (line == "<event>") {
       EventCount += 1;
@@ -70,14 +73,14 @@ void ConvertToRooTracker(std::vector<Particle> data) {
   int nmax_evt = nmax / 4;
   std::cout << "Converting " << nmax << " particles in " << nmax_evt << " events to rootracker format." << std::endl;
 
-  int kNPmax = 250;                    //but why?
+  int kNPmax = 250;                    
 
   int    brEvtNum;                     //Event number
-  double brEvtXSec;
-  double brEvtDXSec;
-  UInt_t brEvtKPS;
+  double brEvtXSec;                    //Cross section for selected event
+  double brEvtDXSec;                   //Cross section for selected event kinematics
+  UInt_t brEvtKPS;                     //Kinematic phase space variables as in KinePhaseSpace_t
   double brEvtWght;                    //Event weight
-  double brEvtProb;
+  double brEvtProb;                    //Probability for that event (given cross section, path lengths, etc)
   double brEvtVtx[4];                  //Event vertex position in detector co-ordinate system
   int    brStdHepN;                    //number of particles in particle array
 
@@ -87,14 +90,13 @@ void ConvertToRooTracker(std::vector<Particle> data) {
   double brStdHepX4     [kNPmax][4];   //4-x (x,y,z,t) of particle in hit nucleus frame (fm)
   double brStdHepP4     [kNPmax][4];   //4-p (px,py,pz,E) of particle in LAB frame (GeV)
   double brStdHepPolz   [kNPmax][3];   //polarisation vector
-  int    brStdHepFd     [kNPmax] ;      //first daughter
-  int    brStdHepLd     [kNPmax] ;      //last daughter
-  int    brStdHepFm     [kNPmax] ;      //first mother
-  int    brStdHepLm     [kNPmax] ;      //last mother
+  int    brStdHepFd     [kNPmax] ;     //first daughter
+  int    brStdHepLd     [kNPmax] ;     //last daughter
+  int    brStdHepFm     [kNPmax] ;     //first mother
+  int    brStdHepLm     [kNPmax] ;     //last mother
 
   //open the output root file & tree
-  //TFile fout(OutputFile.c_str(), "RECREATE");
-  TFile fout("TEG_rootracker.gtrac.root", "RECREATE");
+  TFile fout(OutputFile.c_str(), "RECREATE");
   TTree * rootracker_tree = new TTree("gRooTracker", "GENIE event tree rootracker format");
 
   //create output root tree branches
@@ -169,14 +171,6 @@ void ConvertToRooTracker(std::vector<Particle> data) {
     
     brStdHepN = PartCount;
 
-    //std::cout << "Event number " << brEvtNum << std::endl;
-    //std::cout << "PDG code " << brStdHepPdg[PartCount] << std::endl;
-    //std::cout << "State " << brStdHepStatus[PartCount] << std::endl;
-    //std::cout << "px " << brStdHepP4[PartCount][0] << std::endl;
-    //std::cout << "py " << brStdHepP4[PartCount][1] << std::endl;
-    //std::cout << "pz " << brStdHepP4[PartCount][2] << std::endl;
-    //std::cout << "E " << brStdHepP4[PartCount][3] << std::endl;
-
     //fill tree
     rootracker_tree->Fill();
   } //closing event loop
@@ -189,10 +183,8 @@ void ConvertToRooTracker(std::vector<Particle> data) {
 int main(int argc, char** argv) {
 
   CLI::App app{"A program to convert the output of trident event generator into rootracker format"};
-  std::string InputFile = "";
-  std::string OutputFile = "";
   app.add_option("-i, --input",     InputFile,   "Input file name (text file)")->required();
-  //app.add_option("-o, --output",    OutputFile,  "Output file name (gtrac.root)");
+  app.add_option("-o, --output",    OutputFile,  "Output file name (gtrac.root)");
   CLI11_PARSE(app, argc, argv);
    
   std::vector<Particle> data = GetData(InputFile);
