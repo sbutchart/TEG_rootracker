@@ -14,12 +14,11 @@
 std::string InputFile = "";
 std::string OutputFile = "TEG_rootracker.gtrac.root";
 
-
 class Particle: public TObject {
   public:
-    int fEvent;
-    int fPDG;
-    int fState;
+    int    fEvent;
+    int    fPDG;
+    int    fState;
     double fpx;
     double fpy;
     double fpz;
@@ -29,6 +28,7 @@ class Particle: public TObject {
 
 
 std::vector<Particle> GetData(std::string InputFile) {
+  
   std::vector<Particle> part;
   double PDG, in_out_state, px, py, pz, E, m;
   int EventCount = 0;
@@ -46,7 +46,8 @@ std::vector<Particle> GetData(std::string InputFile) {
       for (int i = 0; i < 4; i++) {
         getline(inFile, lines[i]);
 	Particle c;
-        std::stringstream ss(lines[i]);
+        
+	std::stringstream ss(lines[i]);
         while(ss >> PDG >> in_out_state >> px >> py >> pz >> E >> m){
           c.fEvent     = EventCount;
           c.fPDG       = PDG;
@@ -127,11 +128,11 @@ void ConvertToRooTracker(std::vector<Particle> data) {
     PartCount += 1;
 
     //clear output tree branches
-    brEvtNum  = 0;
-    brEvtXSec = 0;
+    brEvtNum   = 0;
+    brEvtXSec  = 0;
     brEvtDXSec = 0;
-    brEvtKPS = 0;
-    brEvtWght = 0;
+    brEvtKPS   = 0;
+    brEvtWght  = 0;
 
     for(int k; k<4; k++) {
       brEvtVtx[k] = 0;
@@ -173,7 +174,7 @@ void ConvertToRooTracker(std::vector<Particle> data) {
 
     //fill tree
     rootracker_tree->Fill();
-  } //closing event loop
+  } //event loop
 
   fout.Write();
   fout.Close();
